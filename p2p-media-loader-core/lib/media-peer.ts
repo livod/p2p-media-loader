@@ -249,7 +249,7 @@ export class MediaPeer extends STEEmitter<
                     return new Map<string, MediaPeerSegmentStatus>();
                 }
 
-                segmentsMap.set(`${streamSwarmId}+${segmentsIds[i]}`, segmentStatus);
+                segmentsMap.set(segmentsIds[i], segmentStatus);
             }
         }
 

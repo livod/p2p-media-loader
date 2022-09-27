@@ -298,8 +298,22 @@ export class HybridLoader extends EventEmitter implements LoaderInterface {
         for (let index = 0; index < this.segmentsQueue.length; index++) {
             const segment = this.segmentsQueue[index];
 
+            // TODO: 这是为了 http mp4 分片而加，因为会重新拉取旧分片
+            if (storageSegments.has(segment.id)) {
+                this.emit(Events.SegmentLoaded, storageSegments.get(segment.id)?.segment);
+                continue;
+            }
             if (storageSegments.has(segment.id) || this.httpManager.isDownloading(segment)) {
                 continue;
+            }
+
+            // TODO: 这是为了 http mp4 分片而加，优先通过 P2P 拉取
+            segmentsMap = segmentsMap ? segmentsMap : this.p2pManager.getOverallSegmentsMap();
+            if (segmentsMap.get(segment.id) === MediaPeerSegmentStatus.Loaded) {
+                if (this.p2pManager.download(segment)) {
+                    this.debugSegments("P2P download", segment.priority, segment.url);
+                    continue;
+                }
             }
 
             if (
