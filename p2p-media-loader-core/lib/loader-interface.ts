@@ -22,6 +22,7 @@ export type Segment = {
     readonly streamId: string | undefined;
     readonly sequence: string;
     readonly range: string | undefined;
+    readonly wsRange: {start: number, length: number} | undefined;
     readonly priority: number;
     data?: ArrayBuffer;
     downloadBandwidth?: number;

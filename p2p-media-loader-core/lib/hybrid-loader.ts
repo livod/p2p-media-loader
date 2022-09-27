@@ -19,7 +19,7 @@ import { EventEmitter } from "events";
 import Peer from "simple-peer";
 
 import { LoaderInterface, Events, Segment } from "./loader-interface";
-import { HttpMediaManager } from "./http-media-manager";
+import { WsMediaManager } from "./ws-media-manager";
 import { P2PMediaManager } from "./p2p-media-manager";
 import { MediaPeerSegmentStatus } from "./media-peer";
 import { BandwidthApproximator } from "./bandwidth-approximator";
@@ -57,7 +57,7 @@ const defaultSettings: HybridLoaderSettings = {
 export class HybridLoader extends EventEmitter implements LoaderInterface {
     private readonly debug = Debug("p2pml:hybrid-loader");
     private readonly debugSegments = Debug("p2pml:hybrid-loader-segments");
-    private readonly httpManager: HttpMediaManager;
+    private readonly httpManager: WsMediaManager;
     private readonly p2pManager: P2PMediaManager;
     private segmentsStorage: SegmentsStorage;
     private segmentsQueue: Segment[] = [];
@@ -125,7 +125,7 @@ export class HybridLoader extends EventEmitter implements LoaderInterface {
     }
 
     private createHttpManager = () => {
-        return new HttpMediaManager(this.settings);
+        return new WsMediaManager(this.settings);
     };
 
     private createP2PManager = () => {
@@ -336,8 +336,7 @@ export class HybridLoader extends EventEmitter implements LoaderInterface {
 
                 if (this.httpManager.getActiveDownloadsCount() < this.settings.simultaneousHttpDownloads) {
                     // Abort P2P download of the required segment if any and force HTTP download
-                    const downloadedPieces = this.p2pManager.abort(segment);
-                    this.httpManager.download(segment, downloadedPieces);
+                    this.httpManager.download(segment);
                     this.debugSegments("HTTP download (priority)", segment.priority, segment.url);
                     updateSegmentsMap = true;
                     continue;
@@ -696,4 +695,9 @@ export type HybridLoaderSettings = {
      * By default the segments are stored in JavaScript memory.
      */
     segmentsStorage?: SegmentsStorage;
+
+    /**
+     * WebSocket Server Url
+     */
+    wsServer?: string;
 };
