@@ -23,21 +23,20 @@ export class WsMediaManager extends STEEmitter<"segment-loaded" | "segment-error
     connectWs() {
         const wsServer = this.settings.wsServer || "ws://wsfile.test.seewo.com";
         this.webSocket = new WebSocket(wsServer);
-        var keepAliveCount = 0;
 
         this.webSocket.onopen = (openEvent) => {
-            this.webSocket.send("keep-alive");
-            console.log(openEvent);
+            this.debug("ws open");
         };
 
         this.webSocket.onclose = (params) => {
             setTimeout(() => {
+                this.debug("ws reconnect after close");
                 this.connectWs();
             }, 200);
         };
 
         this.webSocket.onerror = (err: any) => {
-            console.error("Socket encountered error: ", err.message, "Closing socket");
+            this.debug("Socket encountered error: ", err.message, "Closing socket");
             this.webSocket.close();
         };
 
@@ -52,13 +51,6 @@ export class WsMediaManager extends STEEmitter<"segment-loaded" | "segment-error
                     this.segmentDownloadFinished(arrayBuffer);
                 };
                 fileReader.readAsArrayBuffer(wsMsg);
-                /* NOTE: the web server has a idle-timeout of 60 seconds,
-                 so we need to send a keep-alive message regulary */
-                keepAliveCount++;
-                if (keepAliveCount >= 10 && this.webSocket.readyState == WebSocket.OPEN) {
-                    keepAliveCount = 0;
-                    this.webSocket.send("keep-alive");
-                }
             }
         };
 
