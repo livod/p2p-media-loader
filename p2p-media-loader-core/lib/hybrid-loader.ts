@@ -19,7 +19,7 @@ import { EventEmitter } from "events";
 import Peer from "simple-peer";
 
 import { LoaderInterface, Events, Segment } from "./loader-interface";
-import { WsMediaManager } from "./ws-media-manager";
+import { HttpMediaManager } from "./http-media-manager";
 import { P2PMediaManager } from "./p2p-media-manager";
 import { MediaPeerSegmentStatus } from "./media-peer";
 import { BandwidthApproximator } from "./bandwidth-approximator";
@@ -57,7 +57,7 @@ const defaultSettings: HybridLoaderSettings = {
 export class HybridLoader extends EventEmitter implements LoaderInterface {
     private readonly debug = Debug("p2pml:hybrid-loader");
     private readonly debugSegments = Debug("p2pml:hybrid-loader-segments");
-    private readonly httpManager: WsMediaManager;
+    private readonly httpManager: HttpMediaManager;
     private readonly p2pManager: P2PMediaManager;
     private segmentsStorage: SegmentsStorage;
     private segmentsQueue: Segment[] = [];
@@ -125,7 +125,7 @@ export class HybridLoader extends EventEmitter implements LoaderInterface {
     }
 
     private createHttpManager = () => {
-        return new WsMediaManager(this.settings);
+        return new HttpMediaManager(this.settings);
     };
 
     private createP2PManager = () => {
@@ -309,9 +309,17 @@ export class HybridLoader extends EventEmitter implements LoaderInterface {
 
             // TODO: 这是为了 http mp4 分片而加，优先通过 P2P 拉取
             segmentsMap = segmentsMap ? segmentsMap : this.p2pManager.getOverallSegmentsMap();
+            this.debugSegments("Try P2P download", segment, segmentsMap);
+
+            // 避免后面 p2pManager.download 返回 false，然后使用 http 下载又取消了 p2p 的下载
+            if (this.p2pManager.isDownloading(segment)) {
+                this.debugSegments("P2P is downloading", segment);
+                continue;
+            }
+
             if (segmentsMap.get(segment.id) === MediaPeerSegmentStatus.Loaded) {
                 if (this.p2pManager.download(segment)) {
-                    this.debugSegments("P2P download", segment.priority, segment.url);
+                    this.debugSegments("P2P download (first)", segment.priority, segment.url);
                     continue;
                 }
             }
