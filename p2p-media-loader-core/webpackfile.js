@@ -3,7 +3,7 @@ const webpack = require("webpack");
 
 const OUTPUT_PATH = "build";
 
-function makeConfig({ libName, entry, mode }) {
+function makeConfig({ libName, entry, mode, output }) {
     return {
         mode,
         entry,
@@ -22,7 +22,7 @@ function makeConfig({ libName, entry, mode }) {
         },
         output: {
             filename: libName + ".js",
-            path: path.resolve(__dirname, OUTPUT_PATH),
+            path: output || path.resolve(__dirname, OUTPUT_PATH),
         },
         plugins: [
             new webpack.ProvidePlugin({
@@ -34,14 +34,25 @@ function makeConfig({ libName, entry, mode }) {
 }
 
 module.exports = [
+    // makeConfig({
+    //     entry: "./lib/browser-init-webpack.ts",
+    //     mode: "development",
+    //     libName: "p2p-media-loader-core",
+    // }),
+    // makeConfig({
+    //     entry: "./lib/browser-init-webpack.ts",
+    //     mode: "production",
+    //     libName: "p2p-media-loader-core.min",
+    // }),
     makeConfig({
-        entry: "./lib/browser-init-webpack.ts",
-        mode: "development",
-        libName: "p2p-media-loader-core",
-    }),
-    makeConfig({
-        entry: "./lib/browser-init-webpack.ts",
+        entry: "./lib/grail.ts",
         mode: "production",
-        libName: "p2p-media-loader-core.min",
+        libName: "grail.min",
     }),
+    // makeConfig({
+    //     entry: "./lib/share.ts",
+    //     mode: "development",
+    //     libName: "p2p-share.min",
+    //     output: path.resolve('D:\\Code\\FuJinxiang\\快速尝试\\webtorrent')
+    // }),
 ];
