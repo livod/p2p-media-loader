@@ -17,8 +17,9 @@
 import { EventEmitter } from "events";
 import { Events, LoaderInterface, HybridLoader, HybridLoaderSettings } from "p2p-media-loader-core";
 import { SegmentManager, ByteRange, SegmentManagerSettings } from "./segment-manager";
-import { HlsJsLoader } from "./hlsjs-loader";
-import type { LoaderCallbacks, LoaderConfiguration, LoaderContext } from "hls.js/src/types/loader";
+// import { HlsJsLoader } from "./hlsjs-loader";
+// import type { LoaderCallbacks, LoaderConfiguration, LoaderContext } from "hls.js/src/types/loader";
+import XhrLoader from "./xhr-loader";
 
 export interface HlsJsEngineSettings {
     loader: Partial<HybridLoaderSettings>;
@@ -44,54 +45,64 @@ export class Engine extends EventEmitter {
             .forEach((event) => this.loader.on(event, (...args: unknown[]) => this.emit(event, ...args)));
     }
 
-    public createLoaderClass(): new () => unknown {
+    public createLoaderClass() {
         const engine = this; // eslint-disable-line @typescript-eslint/no-this-alias
-        return class {
-            private impl: HlsJsLoader;
-            private context: LoaderContext | undefined;
 
-            public stats : any;
+               //     static getEngine = () => {
+        //         return engine;
+        //     };
 
-            constructor() {
-                this.impl = new HlsJsLoader(engine.segmentManager);
-                this.stats = {
-                    aborted: false,
-                    retry: 0,
-                    chunkCount: 0,
-                    bwEstimate: 0,
-                    parsing: { start: 0, end: 0},
-                    loading: { start: 0, first: 0, end: 0 },
-                    buffering: { start: 0, first: 0, end: 0 },
-                    loaded: 0,
-                    total: 0,
-                }
-            }
+        XhrLoader.getEngine = ()=>{
+            return engine;
+        }
 
-            load = async (
-                context: LoaderContext,
-                config: LoaderConfiguration,
-                callbacks: LoaderCallbacks<LoaderContext>
-            ) => {
-                this.context = context;
-                await this.impl.load(context, config, callbacks);
-            };
+        return XhrLoader;
+        // return class {
+        //     private impl: HlsJsLoader;
+        //     private context: LoaderContext | undefined;
 
-            abort = () => {
-                if (this.context) {
-                    this.impl.abort(this.context);
-                }
-            };
+        //     public stats : any;
 
-            destroy = () => {
-                if (this.context) {
-                    this.impl.abort(this.context);
-                }
-            };
+        //     constructor() {
+        //         this.impl = new HlsJsLoader(engine.segmentManager);
+        //         this.stats = {
+        //             aborted: false,
+        //             retry: 0,
+        //             chunkCount: 0,
+        //             bwEstimate: 0,
+        //             parsing: { start: 0, end: 0},
+        //             loading: { start: 0, first: 0, end: 0 },
+        //             buffering: { start: 0, first: 0, end: 0 },
+        //             loaded: 0,
+        //             total: 0,
+        //         }
+        //     }
 
-            static getEngine = () => {
-                return engine;
-            };
-        };
+        //     load = async (
+        //         context: LoaderContext,
+        //         config: LoaderConfiguration,
+        //         callbacks: LoaderCallbacks<LoaderContext>
+        //     ) => {
+        //         this.context = context;
+        //         await this.impl.load(context, config, callbacks);
+        //     };
+
+        //     abort = () => {
+        //         if (this.context) {
+        //             this.impl.abort(this.context);
+        //         }
+        //     };
+
+        //     destroy = () => {
+        //         if (this.context) {
+        //             this.impl.abort(this.context);
+        //         }
+        //     };
+
+        //     static getEngine = () => {
+        //         return engine;
+        //     };
+        // };
     }
 
     public async destroy(): Promise<void> {
